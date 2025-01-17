@@ -1,4 +1,11 @@
 
+const [path, code, organizer, event, instance] = window.location.pathname.match(/^\/(([^\/\?]{6})|([^\/\?]{5})|([^\/\?]{4})(\/|$))?/);
+if (!code) {
+  const redirect = new URL(location.href);
+  redirect.pathname = `/gx5z3${path}`;
+  console.log(`overriding url ${location.href} with ${redirect.toString()}`);
+  window.history.replaceState(window.history.state, "", redirect.toString());
+}
 const queryArgs = new URLSearchParams(window.location.search);
 const debug = queryArgs.get('debug') !== null;
 const protocol = location.protocol.replace('http','ws').replace('file','ws');
@@ -13,6 +20,7 @@ if (queryArgs.has("lang")) {
   queryArgs.delete("lang");
   const redirect = new URL(location.href);
   redirect.search = queryArgs.toString();
+  console.log(`overriding url ${location.href} with ${redirect.toString()}`);
   window.history.replaceState(window.history.state, "", redirect.toString());
 }
 
