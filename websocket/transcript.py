@@ -182,29 +182,28 @@ class Line:
 	def format_elapsed_time(self, time_offset: float = 0.0, use_dot: bool = False):
 		return f"{self.format_time(self.start - time_offset, use_dot)} --> {self.format_time(self.end - time_offset, use_dot)}\n"
 
-	def format_time(self, time: float, use_dot: bool = False):
+	@staticmethod
+	def format_time(time: float, use_dot: bool = False):
 		sign = ""
 		if time < 0:
 			sign = "-"
 			time = -time
 
-		seconds = int(time/1000)
-		milliseconds = int(time - (seconds * 1000))
+		milliseconds = int((time % 1) * 1000)
+		seconds = int(time)
 		minutes = int(seconds/60)
 		hours = int(minutes/60)
-		days = int(hours/24)
+		#days = int(hours/24)
 
 		msep = "." if use_dot else ","
 
-		hours = hours-(days*24)
-		minutes = minutes-(days*24*60)-(hours*60)
-		seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60)
+		minutes = minutes-(hours*60)
+		seconds = seconds-(hours*60*60)-(minutes*60)
+		#hours = hours-(days*24)
+		#minutes = minutes-(days*24*60)-(hours*60)
+		#seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60)
 
-		pad = lambda x: str(x).rjust(2, '0')
-		pad3 = lambda x: str(x).rjust(3, '0')
-
-		return f"{sign}{pad(hours)}:{pad(minutes)}:{pad(seconds)}{msep}{pad3(milliseconds)}"
-		#return f"{str(hours).rjust(2, '0')}:{str(minutes).rjust(2, '0')}:{str(seconds).rjust(2, '0')}{milliseconds_separator}{str(milliseconds).rjust(3, '0')}"
+		return f"{sign}{hours:02d}:{minutes:02d}:{seconds:02d}{msep}{milliseconds:03d}"
 
 
 

@@ -69,3 +69,12 @@ def test_json_export():
 	assert data["end"] == end.isoformat()
 	assert data["text"] == text
 	assert set(data["previously_associated_tids"]) == set(previously_associated_tids)
+
+def test_format_time():
+	assert Line.format_time(1) == "00:00:01,000"
+	assert Line.format_time(-1) == "-00:00:01,000"
+	assert Line.format_time(.1) == "00:00:00,100"
+	assert Line.format_time(12.345) == "00:00:12,345"
+	assert Line.format_time(76*60*60 + 5*60 + 43.210) == "76:05:43,210"
+
+	assert Line.format_time(76*60*60 + 5*60 + 43.210, use_dot=True) == "76:05:43.210"
