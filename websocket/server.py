@@ -5,7 +5,7 @@ import asyncio
 import datetime
 import websockets
 import logging
-from websockets.exceptions import ConnectionClosedOK
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from transcript import Session, Transcript, Line
 from translator import DeepLTranslator, DummyTranslator
@@ -231,7 +231,7 @@ async def handler(websocket):
 		def sanitize(s):
 			return s.split(" (from <websockets.")[0]
 		await websocket.send(args([f"{e.__class__.__name__}({', '.join(map(sanitize, e.args))})"]))
-	except ConnectionClosedOK:
+	except (ConnectionClosedOK, ConnectionClosedError):
 		logger.warning("[%s] Disconnected unexpectedly", websocket.id)
 		print(f"disconnected unexpectedly {websocket}")
 	finally:
