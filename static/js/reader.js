@@ -72,6 +72,7 @@ function updateLine(line) {
 function sortLines(lines) {
   const start = Date.now();
   const ps = Array.from(history.children);
+  const previousBefore = Object.fromEntries(ps.map(e => [e.getAttribute("tid"), getComputedStyle(e).getPropertyValue("--pause-before")]));
   const indices = Object.fromEntries(lines.map((l, i) => [l.tid, i]));
   ps.sort((a,b) => indices[a.getAttribute("tid")] - indices[b.getAttribute("tid")]);
   history.replaceChildren.apply(history, ps);
@@ -84,10 +85,15 @@ function sortLines(lines) {
     const line = lines[i];
     if (prev !== null) {
       const pause = Math.max(line.start - prev.end, 0) / 1000;
-      p.style.setProperty("--pause-before", pause);
-      if (!hasCSSPow) {
-        const fallback = Math.pow(1 - pause / maxSeconds, curveExponent);
-        p.style.setProperty("--pause-pow-value", fallback);
+      if (
+        !(p.getAttribute("tid") in previousBefore) ||
+        Math.round(pause * 100) / 100  !=  Math.round(Number(previousBefore[p.getAttribute("tid")] * 100)) / 100
+      ) {
+        p.style.setProperty("--pause-before", pause);
+        if (!hasCSSPow) {
+          const fallback = Math.pow(1 - pause / maxSeconds, curveExponent);
+          p.style.setProperty("--pause-pow-value", fallback);
+        }
       }
     }
     prev = line;
