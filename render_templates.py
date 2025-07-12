@@ -6,6 +6,11 @@ from functools import lru_cache
 import re
 import datetime
 import subprocess
+import difflib
+try:
+	import icdiff
+except ImportError:
+	pass
 
 DEBUG = not (os.environ.get("DEBUG", "False").lower() in ('false', 'f', 'no', 'n', '0', ''))
 
@@ -155,14 +160,32 @@ def ensure_file(path, content):
 				if original == content:
 					return False
 				else:
-					differ = difflib.unified_diff(
-						original.split("\n"),
-						content.split("\n"),
-						fromfile=str(os.path.relpath(path, script_dir)),
-						tofile=str(os.path.relpath(path, script_dir)),
-						fromfiledate=datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(),
-						tofiledate=datetime.datetime.now().isoformat(),
-					)
+					try:
+						class Dummy:
+							def __init__(self):
+								self.cols = None
+						options = Dummy()
+						icdiff.set_cols_option(options)
+						differ = icdiff.ConsoleDiff(
+							cols=options.cols,
+							line_numbers=True,
+						).make_table(
+							fromlines=original.split("\n"),
+							tolines=content.split("\n"),
+							fromdesc=f"{os.path.relpath(path, script_dir)}    {datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat()}",
+							todesc=f"{os.path.relpath(path, script_dir)}    {datetime.datetime.now().isoformat()}",
+							context=True,
+							numlines=3,
+						)
+					except NameError:
+						differ = difflib.unified_diff(
+							original.split("\n"),
+							content.split("\n"),
+							fromfile=str(os.path.relpath(path, script_dir)),
+							tofile=str(os.path.relpath(path, script_dir)),
+							fromfiledate=datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(),
+							tofiledate=datetime.datetime.now().isoformat(),
+						)
 
 					for line in differ:
 						print(line)
