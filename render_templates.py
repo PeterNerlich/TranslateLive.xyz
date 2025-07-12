@@ -27,8 +27,11 @@ def make_render_url_fn(log_replaced=None, log_kept=None, debug=False):
 		log_replaced = []
 	if log_kept is None:
 		log_kept = []
+	outer_debug = debug
 
-	def render_url(match):
+	def render_url(match, debug=None):
+		if debug is None:
+			debug = outer_debug
 		attr = match.group(1)
 		url = match.group(2)
 		# split off anchor and query part
@@ -64,11 +67,20 @@ def make_render_url_fn(log_replaced=None, log_kept=None, debug=False):
 	return render_url
 
 @lru_cache(maxsize=1024)
-def get_timestamp(url):
-	file = Path(render_dir, url)
+def get_timestamp(url, debug=False):
+	file = Path(template_dir, url)
+	if not os.path.exists(file):
+		if debug:
+			print(f"get_timestamp({url!r}) Didn't exist in template dir: {file!r}")
+		file = Path(render_dir, url)
 	if os.path.isfile(file):
 		timestamp = os.path.getmtime(file)
-		return datetime.datetime.fromtimestamp(timestamp).isoformat()
+		value = datetime.datetime.fromtimestamp(timestamp).isoformat()
+		if debug:
+			print(f"get_timestamp({url!r}) Is a file: {file!r}  → {value!r}")
+		return value
+	else:
+		print(f"get_timestamp({url!r}) Wasn't a file: {file!r}")
 
 def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 	render_dir = Path(render_dir)
@@ -84,7 +96,7 @@ def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 			filename = os.path.relpath(static, static_dir)
 			destination = Path(render_dir, filename)
 			if static.is_dir():
-				ensure_dir(destination)
+				ensure_dir(destination, debug=debug)
 			else:
 				ensure_removal(destination)
 				# create link
@@ -144,20 +156,32 @@ def aggregate(items):
 			d[item] += 1
 	return d
 
-def ensure_dir(path):
+def ensure_dir(path, debug=False):
 	if path.exists():
 		if not path.is_dir():
+			if debug:
+				print(f"ensure_dir({path!r}) Path exists as file (deleting)")
 			path.unlink()
 			path.mkdir()
+		else:
+			if debug:
+				print(f"ensure_dir({path!r}) Directory already exists")
 	else:
+		if debug:
+			print(f"ensure_dir({path!r}) Path didn't exist (creating directory)")
 		path.mkdir()
 
-def ensure_file(path, content):
+def ensure_file(path, content, debug=False):
 	if path.exists():
-		if path.is_file():
+		if not path.is_file():
+			#if debug:
+			print(f"ensure_file({path!r}, content) Path exists as directory! (MANUAL ACTION REQUIRED)")
+		else:
 			with open(path, "r") as file:
 				original = file.read()
 				if original == content:
+					if debug:
+						print(f"ensure_file({path!r}, content) No changes to file content required")
 					return False
 				else:
 					try:
@@ -194,12 +218,19 @@ def ensure_file(path, content):
 		file.write(content)
 	return True
 
-def ensure_removal(path):
+def ensure_removal(path, debug=False):
 	if path.exists():
 		if path.is_file():
+			if debug:
+				print(f"ensure_removal({path!r}) Unlinking file")
 			path.unlink()
 		else:
+			if debug:
+				print(f"ensure_removal({path!r}) Removing directory")
 			path.rmdir()
+	else:
+		if debug:
+			print(f"ensure_removal({path!r}) Path already doesn't exist")
 
 if __name__ == '__main__':
 	git = Path(script_dir, ".git")
