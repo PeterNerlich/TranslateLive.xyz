@@ -85,6 +85,9 @@ def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 				# create link
 				#destination.symlink_to(static)
 				destination.hardlink_to(static)
+				# also set mtime from original
+				stat = os.stat(static, follow_symlinks=False)
+				os.utime(destination, (stat.st_atime, stat.st_mtime))
 
 	# file stats
 	written = []
@@ -176,15 +179,17 @@ def ensure_removal(path):
 			path.rmdir()
 
 if __name__ == '__main__':
-	compose_docroot(render_dir=render_dir, template_dir=template_dir, static_dir=static_dir, debug=DEBUG)
-
 	git = Path(script_dir, ".git")
 	version_global = Path(script_dir, "version.json")
 	version_target = Path(render_dir, "version.json")
 	if git.exists() and git.is_dir():
-		subprocess.call([Path(script_dir, "save_version_json.sh")], cwd=render_dir)
+		proc = subprocess.run([Path(script_dir, "save_version_json.sh"), "--"], capture_output=True)
+		content = proc.stdout.decode("utf-8")
+		ensure_file(version_target, content)
 	elif version_global.exists() and version_global.is_file():
 		version_global.copy(version_target)
 		print("No .git directory, copied global version.json")
 	else:
 		print("Unable to generate version file! No .git directory and no global version.json")
+
+	compose_docroot(render_dir=render_dir, template_dir=template_dir, static_dir=static_dir, debug=DEBUG)
