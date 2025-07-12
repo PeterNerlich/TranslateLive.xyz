@@ -45,7 +45,7 @@ def make_render_url_fn(log_replaced=None, log_kept=None, debug=False):
 			return match.group(0)
 		# add timestamp to urls
 		if path.endswith((".html", ".css", ".js", ".json")):
-			timestamp = get_timestamp(path)
+			timestamp = get_timestamp(path.removeprefix("/"), debug=debug)
 			if query:
 				query = f"{query}&v={timestamp}"
 			else:
