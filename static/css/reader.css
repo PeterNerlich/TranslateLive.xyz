@@ -87,6 +87,7 @@ body.error.refreshing {
 #history.hintdelete .delete i {
   font-style: normal;
   transform: scaleX(.5) translateX(calc(-50% - .1em));
+  user-select: none;
 }
 #history.hintdelete .delete::after {
   content: "";
