@@ -188,8 +188,8 @@ const enqueueUpdateLine = (debug => {
   };
 })(false);
 
-keyhints.addHint({key: "PageUp"}, goToPreviousLine, "PgUp", "Previous line", 10, true);
-keyhints.addHint({key: "PageDown"}, goToNextLine, "PgDown", "Next line", 11, true);
+keyhints.addHint({ctrlKey: false, shiftKey: false, key: "PageUp"}, goToPreviousLine, "PgUp", "Previous line", 10, true);
+keyhints.addHint({ctrlKey: false, shiftKey: false, key: "PageDown"}, goToNextLine, "PgDown", "Next line", 11, true);
 keyhints.addHint({ctrlKey: false, shiftKey: false, key: "Enter"}, submitChanges, "⏎", "Submit changes", 20, true);
 keyhints.addHint({ctrlKey: false, shiftKey: true, key: "Enter"}, lineBreak, "⇧+⏎", "Line break", 21, true);
 keyhints.addHint({key: "Escape"}, discardChanges, "ESC", "Discard changes", 22, true);
