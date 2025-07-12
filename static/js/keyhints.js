@@ -1,11 +1,12 @@
 
 class KeyHints {
-	constructor(scope, legend, legendTimeout=200, debug) {
+	constructor(scope, legend, legendTimeout=200, debug=false, nodeType="div") {
 		this.hints = {};
 		this.changeScope(scope || document);
 		this.legend = legend;
 		this.legendTimeout = legendTimeout;
 		this.debug = debug || false;
+		this.nodeType = nodeType || "div";
 	}
 
 	matches(actual, desired) {
@@ -28,7 +29,11 @@ class KeyHints {
 
 	triggerHint(hint, event) {
 		if (hint.legend) {
-			if ("type" in hint.combination || ["click", "mousedown"].includes(event.type)) {
+			if (
+				"type" in hint.combination ||
+				["click", "mousedown"].includes(event.type) ||
+				event.type == "keydown" && hint.singleShot
+			) {
 				hint.legend.classList.add("pressed");
 				if (hint.legendTimeout) window.clearTimeout(hint.legendTimeout);
 				hint.legendTimeout = window.setTimeout(() => {
@@ -101,6 +106,8 @@ class KeyHints {
 
 	updateLegend() {
 		if (this.legend) {
+			const pressed = Array.from(this.legend.querySelectorAll(".pressed")).map(e => e.getAttribute("data-display"));
+
 			const hints = this.sortedHints();
 			let i;
 			for (i = 0; i < hints.length; i++) {
@@ -108,7 +115,7 @@ class KeyHints {
 				if (hints[i].hidden) continue;
 				const div = (i < this.legend.children.length ?
 					this.legend.children[i] :
-					this.legend.appendChild(document.createElement('div'))
+					this.legend.appendChild(document.createElement(this.nodeType))
 				);
 				const shouldRedo = !(
 					div.children.length == 1 &&
@@ -123,6 +130,11 @@ class KeyHints {
 					div.append(document.createTextNode(" "));
 				}
 				div.setAttribute("data-display", hints[i].display);
+				if (pressed.includes(hints[i].display)) {
+					div.classList.add("pressed");
+				} else {
+					div.classList.remove("pressed");
+				}
 				const kbd = div.childNodes[0];
 				const text = div.childNodes[1];
 				if (kbd.innerText !== hints[i].display) {
