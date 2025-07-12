@@ -64,7 +64,7 @@ class WebsocketClient {
 	}
 	_handleClose(socket) {
 		if (socket !== this.socket) {
-			console.log("_handleClose() called for a stale socket", socket);
+			console.debug("_handleClose() called for a stale socket", socket);
 			return;
 		}
 		if (this.expecting) this.expecting(null);
@@ -119,7 +119,7 @@ class WebsocketClient {
 
 	expect(msgs) {
 		if (typeof msgs === "string")  msgs = [msgs];
-		console.log(`Now expecting ${msgs}`);
+		//console.debug(`Now expecting ${msgs}`);
 		const expecting = (res, rej, verbs) => {
 			this.expecting = null;
 			if (verbs === null) {
@@ -131,7 +131,7 @@ class WebsocketClient {
 			if (!(msgs === undefined || msgs.includes(verbs[0]))) {
 				throw new UnexpectedMessageError(this.websocket, msgs, verbs[0]);
 			}
-			console.log(`Expection fulfilled: ${verbs}`);
+			//console.debug(`Expection fulfilled: ${verbs}`);
 			res(this.parseMessage(verbs));
 		}
 		const promise = (res, rej) => {
@@ -280,7 +280,7 @@ class WebsocketClient {
 				condition.pingAvg = condition.recentPings.reduce((acc, c) => acc + c, 0) / condition.recentPings.length;
 			}).then(() => {
 				if (socket !== this.socket) {
-					console.log("Pong for stale socket");
+					console.debug("Pong for stale socket");
 					return;
 				}
 				const now = Date.now();
@@ -290,10 +290,10 @@ class WebsocketClient {
 				condition.recentPings.splice(0, condition.recentPings.length - 3);
 				condition.pingAvg = condition.recentPings.reduce((acc, c) => acc + c, 0) / condition.recentPings.length;
 				condition.state = "alive";
-				//console.log(condition);
+				//console.debug(condition);
 			}).catch(e => {
 				if (socket !== this.socket) {
-					console.log("Ping timed out for stale socket");
+					console.debug("Ping timed out for stale socket");
 					return;
 				}
 				const now = Date.now();
@@ -354,7 +354,7 @@ class WebsocketClient {
 			}
 			const timeout = window.setTimeout(rej.bind(this, `${counter} timeout`), 50 + 6 * (this.connectionCondition.ping || 4000));
 			this.waitingForConfirmation[counter] = {timeout, args, ifUnhealthy, res, rej};
-			console.log(` ${counter} waiting (50 + ${6 * (this.connectionCondition.ping || 4000)})`);
+			console.debug(` ${counter} waiting (50 + ${6 * (this.connectionCondition.ping || 4000)})`);
 		});
 	}
 	confirm(counter, data) {
@@ -362,7 +362,7 @@ class WebsocketClient {
 			window.clearTimeout(this.waitingForConfirmation[counter].timeout);
 			this.waitingForConfirmation[counter].res();
 			delete this.waitingForConfirmation[counter];
-			console.log(` ${counter} confirmed!`);
+			console.debug(` ${counter} confirmed!`);
 		} else {
 			console.warn(` ${counter} Pong for unknown ping!`);
 		}
@@ -513,11 +513,11 @@ class WebsocketSource extends WebsocketClient {
 
 	submit(lines) {
 		if (typeof lines === 'string') lines = [lines];
-		return this.sendAndWaitForConfirm(["submit", "lines"].concat(lines)).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["submit", "lines"].concat(lines)).then(console.debug).catch(console.error);
 	}
 
 	editorBroadcast(msg) {
-		return this.sendAndWaitForConfirm(["editor_broadcast", msg]).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["editor_broadcast", msg]).then(/*console.debug*/).catch(console.error);
 	}
 }
 
@@ -536,28 +536,28 @@ class WebsocketEditor extends WebsocketClient {
 
 	submit(lines) {
 		if (typeof lines === 'string') lines = [lines];
-		return this.sendAndWaitForConfirm(["submit", "lines"].concat(lines)).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["submit", "lines"].concat(lines)).then(console.debug).catch(console.error);
 	}
 
 	delete(tid) {
-		return this.sendAndWaitForConfirm(["delete", "line", tid]).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["delete", "line", tid]).then(console.debug).catch(console.error);
 	}
 
 	change(tid, content) {
-		return this.sendAndWaitForConfirm(["change", "line", tid, "to", content]).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["change", "line", tid, "to", content]).then(console.debug).catch(console.error);
 	}
 
 	split(tid, pos) {
-		return this.sendAndWaitForConfirm(["split", "line", tid, "at", pos]).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["split", "line", tid, "at", pos]).then(console.debug).catch(console.error);
 	}
 
 	merge(one, two) {
-		return this.sendAndWaitForConfirm(["merge", "lines", one, "and", two]).then(console.log).catch(console.error);
+		return this.sendAndWaitForConfirm(["merge", "lines", one, "and", two]).then(console.debug).catch(console.error);
 	}
 
 	editorBroadcast(msg) {
-		console.warn("editor_broadcast", msg);
-		return this.sendAndWaitForConfirm(["editor_broadcast", msg]).then(console.log).catch(console.error);
+		//console.debug("editor_broadcast", msg);
+		return this.sendAndWaitForConfirm(["editor_broadcast", msg]).then(/*console.debug*/).catch(console.error);
 	}
 }
 
