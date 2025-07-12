@@ -86,6 +86,10 @@ def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 				#destination.symlink_to(static)
 				destination.hardlink_to(static)
 
+	# file stats
+	written = []
+	unchanged = []
+	# link stats
 	all_replaced = []
 	all_kept = []
 	for template in Path(template_dir).rglob("*"):
@@ -97,8 +101,10 @@ def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 		# extract URIs
 		rendered = pattern.sub(make_render_url_fn(replaced, kept, debug=debug), template.read_text())
 		# write to dest
-		with open(destination, "w") as file:
-			file.write(rendered)
+		if ensure_file(destination, rendered):
+			written.append(destination)
+		else:
+			unchanged.append(destination)
 
 		if not debug:
 			print(f"rendered {filename}, replaced {len(replaced)} and kept {len(kept)} links (replaced {len(set(replaced))} and kept {len(set(kept))} unique links)")
@@ -113,6 +119,7 @@ def compose_docroot(render_dir, template_dir, static_dir=None, debug=False):
 		all_kept.extend(kept)
 
 	print(f"\nReplaced {len(all_replaced)} and kept {len(all_kept)} links in total (replaced {len(set(all_replaced))} and kept {len(set(all_kept))} unique links)")
+	print(f"Written {len(written)} files, {len(unchanged)} unchanged")
 	if debug:
 		nl = "\n\t"
 		lines = map(lambda x: f"{x[1]} ×\t{repr(x[0])}", aggregate(all_replaced).items())
@@ -136,6 +143,30 @@ def ensure_dir(path):
 			path.mkdir()
 	else:
 		path.mkdir()
+
+def ensure_file(path, content):
+	if path.exists():
+		if path.is_file():
+			with open(path, "r") as file:
+				original = file.read()
+				if original == content:
+					return False
+				else:
+					differ = difflib.unified_diff(
+						original.split("\n"),
+						content.split("\n"),
+						fromfile=str(os.path.relpath(path, script_dir)),
+						tofile=str(os.path.relpath(path, script_dir)),
+						fromfiledate=datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(),
+						tofiledate=datetime.datetime.now().isoformat(),
+					)
+
+					for line in differ:
+						print(line)
+					print()
+	with open(path, "w") as file:
+		file.write(content)
+	return True
 
 def ensure_removal(path):
 	if path.exists():
