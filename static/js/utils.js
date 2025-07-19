@@ -33,10 +33,15 @@ function wordDiff(a, b) {
 /**************************************/
 
 
-function logAll(obj, name, except) {
+function logAll(obj, name, except, predicate) {
 	for (let key in obj.eventListeners) {
+		// Don't register listener for exempted events
 		if (except && except.includes(key)) continue;
-		obj.subscribe(key, console.log.bind(this, `[${name} | ${key}]`));
+		obj.subscribe(key, msg => {
+			// Only log events for which a special condition is true
+			if (predicate && !predicate(key, msg)) return;
+			console.log.bind(this, `[${name} | ${key}]`);
+		});
 	}
 }
 

@@ -320,7 +320,12 @@ window.addEventListener("resize", e => {
 });
 
 logAll(stt, "stt");
-logAll(source, "source", ["pong"]);
+logAll(source, "source", ["pong"], (key, msg) => {
+  if (key == "editor_broadcast") {
+    return msg.sender !== source.id;
+  }
+  return true;
+});
 
 source.connect();
 stt.begin();
