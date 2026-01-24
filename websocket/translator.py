@@ -170,10 +170,10 @@ class DeepLTranslator(Translator):
 			auth_key = self._auth_key if not self._auth_failover else self._backup_auth_key
 			r = await asyncio.to_thread(requests.post,
 				url="https://api-free.deepl.com/v2/translate",
+				headers={"Authorization": f"DeepL-Auth-Key {auth_key}"},
 				data={
 					"source_lang": source_lang.upper(),
 					"target_lang": target_lang.upper(),
-					"auth_key": auth_key,
 					"text": stripped,
 				},
 			)
